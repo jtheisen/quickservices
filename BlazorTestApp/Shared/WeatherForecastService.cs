@@ -11,4 +11,6 @@ public class WeatherForecast
 public interface IWeatherForecastService
 {
     Task<WeatherForecast[]> GetForecast();
+
+    Task ThrowException();
 }

@@ -11,7 +11,7 @@ public class RequestEnvelope
 
 public class ResponseEnvelope
 {
-    public Boolean IsError { get; set; }
+    public Exception? Exception { get; set; }
 
     public String? Result { get; set; }
 }
@@ -19,4 +19,12 @@ public class ResponseEnvelope
 public interface IRemotingConnection
 {
     Task<ResponseEnvelope> Call(RequestEnvelope args);
+}
+
+public class QuickServiceServerException : Exception
+{
+    public QuickServiceServerException(String serverMessage)
+        : base($"An exception was thrown at the server side: {serverMessage}")
+    {
+    }
 }

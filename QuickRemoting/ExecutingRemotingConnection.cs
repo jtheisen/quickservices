@@ -67,11 +67,15 @@ public class ExecutingRemotingConnection : IRemotingConnection
 
             return new ResponseEnvelope { Result = JsonConvert.SerializeObject(jtokenResult, settings) };
         }
+        catch (TargetInvocationException targetInvocationException)
+        {
+            return new ResponseEnvelope { Exception = targetInvocationException.InnerException };
+        }
         catch (Exception ex)
         {
-            logger?.LogInformation(ex, message);
+            logger?.LogError(ex, message);
 
-            return new ResponseEnvelope { IsError = true, Result = ex.Message };
+            return new ResponseEnvelope { Exception = ex };
         }
     }
 

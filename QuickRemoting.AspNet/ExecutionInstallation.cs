@@ -52,9 +52,11 @@ public static class QuickRemotingExtensions
         {
             var response = await connection.Call(envelope);
 
-            context.Response.StatusCode = response.IsError ? 500 : 200;
+            context.Response.StatusCode = response.Exception is not null ? 418 : 200;
 
-            var responseBytes = Encoding.UTF8.GetBytes(response.Result);
+            var result = response.Result ?? response.Exception?.Message ?? "";
+
+            var responseBytes = Encoding.UTF8.GetBytes(result);
             ms = new MemoryStream(responseBytes);
 
             context.Response.ContentLength = responseBytes.Length;

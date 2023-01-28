@@ -1,5 +1,4 @@
 using BlazorTestApp.Shared;
-using Microsoft.AspNetCore.Mvc;
 
 #pragma warning disable CS1998
 
@@ -28,5 +27,10 @@ public class WeatherForecastServiceImplementation : IWeatherForecastService
             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
         })
         .ToArray();
+    }
+
+    public Task ThrowException()
+    {
+        throw new NotImplementedException();
     }
 }

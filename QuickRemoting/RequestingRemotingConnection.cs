@@ -22,7 +22,9 @@ public class RequestingRemotingConnection : IRemotingConnection
         content.Headers.Add(Constants.InterfaceHeaderName, args.InterfaceName);
         content.Headers.Add(Constants.MethodHeaderName, args.MethodName);
 
-        using var client = clientFactory();
+        var client = clientFactory();
+
+        Exception? exception = null;
 
         HttpResponseMessage? response = null;
         String? responseBody = null;
@@ -36,7 +38,14 @@ public class RequestingRemotingConnection : IRemotingConnection
                 {
                     return new ResponseEnvelope
                     {
-                        IsError = false,
+                        Result = responseBody
+                    };
+                }
+                else if ((Int32)response.StatusCode == 418)
+                {
+                    return new ResponseEnvelope
+                    {
+                        Exception = new QuickServiceServerException(responseBody),
                         Result = responseBody
                     };
                 }
@@ -48,6 +57,7 @@ public class RequestingRemotingConnection : IRemotingConnection
             }
             catch (Exception ex)
             {
+                exception = ex;
                 logger?.LogWarning(ex, $"Exception during attempt {i}");
                 await Task.Delay(TimeSpan.FromMilliseconds(500));
             }
@@ -56,7 +66,7 @@ public class RequestingRemotingConnection : IRemotingConnection
         logger?.LogError(message);
         return new ResponseEnvelope
         {
-            IsError = true,
+            Exception = exception,
             Result = response?.ReasonPhrase ?? responseBody ?? message
         };
     }

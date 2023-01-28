@@ -52,21 +52,21 @@ internal class Interceptor : IInterceptor
             {
                 var response = callTask.Result;
 
-                if (response.IsError)
+                if (response.Exception is not null)
                 {
-                    tcs.TrySetException(new Exception(response.Result)); // IMPROVEME
+                    tcs.TrySetException(response.Exception);
                 }
                 else if (hasVoidReturnType)
                 {
-                    tcs.TrySetResult(null);
+                    tcs.TrySetResult(null!);
                 }
                 else
                 {
                     try
                     {
-                        var result = JsonConvert.DeserializeObject(response.Result, returnType, settings);
+                        var result = JsonConvert.DeserializeObject(response.Result!, returnType, settings);
 
-                        tcs.TrySetResult(result);
+                        tcs.TrySetResult(result!);
                     }
                     catch (Exception ex)
                     {
