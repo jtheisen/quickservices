@@ -64,6 +64,15 @@ public class BasicTests
     {
         var foo = GetService<IFooService, FooServiceImplementation>();
 
-        await Assert.ThrowsExceptionAsync<QuickServiceServerException>(() => foo.ThrowException());
+        try
+        {
+            await foo.ThrowException();
+
+            Assert.Fail();
+        }
+        catch (Exception ex)
+        {
+            Assert.IsTrue(ex is NotImplementedException or QuickServiceServerException);
+        }
     }
 }

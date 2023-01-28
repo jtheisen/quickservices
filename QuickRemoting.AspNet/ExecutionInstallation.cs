@@ -74,7 +74,10 @@ public static class QuickRemotingExtensions
     private static async Task Error(HttpContext context, string error)
     {
         context.Response.StatusCode = 500;
-        context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = error;
+        if (context.Response.HttpContext.Features.Get<IHttpResponseFeature>() is IHttpResponseFeature httpResponseFeature)
+        {
+            httpResponseFeature.ReasonPhrase = error;
+        }
         var message = new MemoryStream(Encoding.UTF8.GetBytes(error));
         await message.CopyToAsync(context.Response.Body);
     }
