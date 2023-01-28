@@ -1,3 +1,6 @@
+using Microsoft.Extensions.DependencyInjection;
+using QuickRemoting;
+
 namespace TestSuite;
 
 public interface IFooService
@@ -25,9 +28,30 @@ public class FooServiceImplementation : IFooService
 [TestClass]
 public class BasicTests
 {
-    [TestMethod]
-    public void TestSimpleStuff()
+    Service GetService<Service, Implementation>()
+        where Implementation : class, Service
+        where Service : class
     {
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<Service, Implementation>();
+        var services = serviceCollection.BuildServiceProvider();
 
+        return RemotingProxyFactory.Create<Service>(new ExecutingRemotingConnection(services, typeof(IFooService).Assembly));
+    }
+
+    [TestMethod]
+    public async Task TestSimpleStuff()
+    {
+        var foo = GetService<IFooService, FooServiceImplementation>();
+
+        Assert.AreEqual("", await foo.GetValue());
+
+        await foo.SetValue("secret");
+
+        Assert.AreEqual("secret", await foo.GetValue());
+
+        await foo.ResetValue();
+
+        Assert.AreEqual("", await foo.GetValue());
     }
 }

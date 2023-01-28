@@ -2,13 +2,13 @@
 
 public class RequestingRemotingConnection : IRemotingConnection
 {
-    ILogger<ExecutingRemotingConnection>? logger;
+    ILogger<RequestingRemotingConnection>? logger;
 
     private readonly string url;
     private readonly Func<HttpClient> clientFactory;
     private readonly int maxAttempts;
 
-    public RequestingRemotingConnection(string url, Func<HttpClient> clientFactory, int maxAttempts = 1)
+    public RequestingRemotingConnection(String url, Func<HttpClient> clientFactory, int maxAttempts = 1)
     {
         this.url = url;
         this.clientFactory = clientFactory;
