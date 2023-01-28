@@ -10,6 +10,8 @@ public interface IFooService
     Task<String> GetValue();
 
     Task ResetValue();
+
+    Task ThrowException();
 }
 
 #pragma warning disable CS1998
@@ -22,6 +24,8 @@ public class FooServiceImplementation : IFooService
     public async Task ResetValue() => value = "";
 
     public async Task SetValue(string value) => this.value = value;
+
+    public Task ThrowException() => throw new NotImplementedException();
 }
 #pragma warning restore
 
@@ -36,7 +40,7 @@ public class BasicTests
         serviceCollection.AddSingleton<Service, Implementation>();
         var services = serviceCollection.BuildServiceProvider();
 
-        return RemotingProxyFactory.Create<Service>(new ExecutingRemotingConnection(services, typeof(IFooService).Assembly));
+        return DispatchProxyFactory.Create<Service>(new ExecutingRemotingConnection(services, typeof(IFooService).Assembly));
     }
 
     [TestMethod]
@@ -53,5 +57,13 @@ public class BasicTests
         await foo.ResetValue();
 
         Assert.AreEqual("", await foo.GetValue());
+    }
+
+    [TestMethod]
+    public async Task TestException()
+    {
+        var foo = GetService<IFooService, FooServiceImplementation>();
+
+        await Assert.ThrowsExceptionAsync<QuickServiceServerException>(() => foo.ThrowException());
     }
 }

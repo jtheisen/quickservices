@@ -1,29 +1,25 @@
-﻿using Castle.DynamicProxy;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace QuickRemoting;
 
-internal class Interceptor : IInterceptor
+class QuickServiceDispatchProxy : DispatchProxy
 {
-    private readonly IRemotingConnection connection;
-    private readonly JsonSerializerSettings settings;
+    internal IRemotingConnection Connection { get; set; } = null!;
+    internal JsonSerializerSettings Settings { get; set; } = null!;
 
-    public Interceptor(IRemotingConnection connection, JsonSerializerSettings settings)
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
-        this.connection = connection;
-        this.settings = settings;
-    }
+        if (targetMethod is null) throw new Exception("No target method to proxy");
+        if (targetMethod.DeclaringType is null) throw new Exception("Target method has no declaring type");
 
-    public void Intercept(IInvocation invocation)
-    {
         var request = new RequestEnvelope
         {
-            Arguments = JsonConvert.SerializeObject(invocation.Arguments, Formatting.Indented, settings),
-            InterfaceName = invocation.Method.DeclaringType!.FullName!,
-            MethodName = invocation.Method.Name
+            Arguments = JsonConvert.SerializeObject(args, Formatting.Indented, Settings),
+            InterfaceName = targetMethod.DeclaringType!.FullName!,
+            MethodName = targetMethod.Name
         };
 
-        var returnTaskType = invocation.Method.ReturnType;
+        var returnTaskType = targetMethod.ReturnType;
 
         if (!typeof(Task).IsAssignableFrom(returnTaskType))
         {
@@ -38,9 +34,7 @@ internal class Interceptor : IInterceptor
 
         var tcs = CustomTaskCompletionSource.Create(returnType);
 
-        invocation.ReturnValue = tcs.GetTask();
-
-        var callTask = connection.Call(request);
+        var callTask = Connection.Call(request);
 
         callTask.ContinueWith(t =>
         {
@@ -64,7 +58,7 @@ internal class Interceptor : IInterceptor
                 {
                     try
                     {
-                        var result = JsonConvert.DeserializeObject(response.Result!, returnType, settings);
+                        var result = JsonConvert.DeserializeObject(response.Result!, returnType, Settings);
 
                         tcs.TrySetResult(result!);
                     }
@@ -75,19 +69,28 @@ internal class Interceptor : IInterceptor
                 }
             }
         });
+
+        return tcs.GetTask();
     }
 }
 
-public class RemotingProxyFactory
+public class DispatchProxyFactory
 {
-    private static readonly ProxyGenerator generator = new();
-
     public static readonly JsonSerializerSettings settings = new() { TypeNameHandling = TypeNameHandling.Auto };
 
     public static TService Create<TService>(IRemotingConnection connection) where TService : class
     {
         InterfaceValidator<TService>.Validate();
 
-        return generator.CreateInterfaceProxyWithoutTarget<TService>(new Interceptor(connection, settings));
+        var service = DispatchProxy.Create<TService, QuickServiceDispatchProxy>();
+
+        var proxy = service as QuickServiceDispatchProxy;
+
+        if (proxy is null) throw new Exception($"Can't cast proxy to it's expected implementation type");
+
+        proxy.Settings = settings;
+        proxy.Connection = connection;
+
+        return service;
     }
 }

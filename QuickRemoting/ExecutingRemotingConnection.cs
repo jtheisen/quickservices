@@ -16,7 +16,7 @@ public class ExecutingRemotingConnection : IRemotingConnection
     {
         this.services = services;
         this.assembly = assembly;
-        this.settings = settings ?? RemotingProxyFactory.settings;
+        this.settings = settings ?? DispatchProxyFactory.settings;
         serializer = JsonSerializer.Create(this.settings);
     }
 

@@ -20,7 +20,7 @@ public static class QuickRemotingExtensions
                 ,
             maxAttempts: 10
         );
-        var service = RemotingProxyFactory.Create<TService>(connection);
+        var service = DispatchProxyFactory.Create<TService>(connection);
         return service;
     }
 
@@ -36,7 +36,7 @@ public static class QuickRemotingExtensions
                 //.WithWvIdentityForwarding()
                 //.WithCultureForwarding()
                 );
-                return RemotingProxyFactory.Create<TService>(connection);
+                return DispatchProxyFactory.Create<TService>(connection);
             }
         );
     }
