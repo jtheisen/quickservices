@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace QuickRemoting;
 
@@ -22,5 +22,22 @@ public static class QuickRemotingExtensions
         );
         var service = RemotingProxyFactory.Create<TService>(connection);
         return service;
+    }
+
+    public static void AddQuickRemotingService<TService>(this IServiceCollection services, String? path = null) where TService : class
+    {
+        services.AddScoped(
+            typeof(TService),
+            sp =>
+            {
+                var connection = new RequestingRemotingConnection(
+                    path ?? Constants.DefaultPath,
+                    () => sp.GetRequiredService<HttpClient>()
+                //.WithWvIdentityForwarding()
+                //.WithCultureForwarding()
+                );
+                return RemotingProxyFactory.Create<TService>(connection);
+            }
+        );
     }
 }
